@@ -74,7 +74,7 @@ def process_loci_file(loci_filename: str, output_filename: str, score_map: dict,
     counter = 0
     skipped_lines = []
     with open(output_filename, 'w') as file_out:
-        file_out.write('#chr\tstart\tend\tscore\tfeature')
+        file_out.write('#chr\tstart\tend\tscore\tfeature\n')
         with gzip.open(loci_filename, 'rt') as file:
             for line in file:
                 try:
@@ -90,12 +90,12 @@ def process_loci_file(loci_filename: str, output_filename: str, score_map: dict,
                     continue
                 key = '.'.join([feature.get(k) for k in FEATURE_KEYS])
                 score = score_map.get(key)
-                if score:
-                    loci = data.get('locus')
-                    file_out.write(f"{loci}\t{score}\t{feature.get('uniprotFeatureName')}\n")
-                else:
+                if score is None:
                     # _logger.info(f'current loci does not map to any score: {key}')
                     skipped_lines.append(line)
+                else:
+                    loci = data.get('locus')
+                    file_out.write(f"{loci}\t{score}\t{key}\n")
                 if total_lines:
                     counter += 1
                     if counter % (total_lines // 5000) == 0:
@@ -105,4 +105,4 @@ def process_loci_file(loci_filename: str, output_filename: str, score_map: dict,
 
     end_time = time.time()
     _logger.info(f'# of lines skipped due to parsing error: {len(skipped_lines)}')
-    _logger.info(f'processing complete, time spent: {end_time - start_time}')
+    _logger.info(f'processing complete, time spent: {datetime.timedelta(seconds=end_time - start_time)}')
