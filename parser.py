@@ -13,8 +13,8 @@ _logger = logging.getLogger('3DTS_LOGGER')
 def read_scores_into_ram(filename: str, total_lines: int = 0) -> Dict:
     """
     Process the scores.gz file and put (feature, score) mapping into RAM. The feature is serialized to a string
-    separated by dot (.) in the format of:
-    pdbId.pdbChain.uniprotFeatureName.pdbResidueMin.pdbResidueMax
+    separated by tab (\t) in the format of:
+    pdbId   pdbChain    uniprotFeatureName  pdbResidueMin   pdbResidueMax
 
     The feature object from the file looks like this:
     "featureKey": { # this whole object is the key in score file
@@ -46,7 +46,7 @@ def read_scores_into_ram(filename: str, total_lines: int = 0) -> Dict:
                 skipped_lines.append(line)
                 _logger.error(f'Failed to get featureKey from line: {line}')
                 continue
-            key = '.'.join([feature[field] for field in FEATURE_KEYS])
+            key = '\t'.join([feature[field] for field in FEATURE_KEYS])
             try:
                 post_global_synonymous_rate = data.get(
                     'nsPostHeptamerIndependentChromosomeSpecificIntergenicRate'
@@ -74,7 +74,7 @@ def process_loci_file(loci_filename: str, output_filename: str, score_map: dict,
     counter = 0
     skipped_lines = []
     with open(output_filename, 'w') as file_out:
-        file_out.write('#chr\tstart\tend\tscore\tfeature\n')
+        file_out.write('#chr\tstart\tend\tscore\tpdbId\tpdbChain\tuniprotFeatureName\tpdbResidueMin\tpdbResidueMax\n')
         with gzip.open(loci_filename, 'rt') as file:
             for line in file:
                 try:
@@ -88,7 +88,7 @@ def process_loci_file(loci_filename: str, output_filename: str, score_map: dict,
                     skipped_lines.append(line)
                     _logger.error(f'Failed to get feature from line: {line}')
                     continue
-                key = '.'.join([feature.get(k) for k in FEATURE_KEYS])
+                key = '\t'.join([feature.get(k) for k in FEATURE_KEYS])
                 score = score_map.get(key)
                 if score is None:
                     # _logger.info(f'current loci does not map to any score: {key}')
